@@ -1,0 +1,20 @@
+api_platform:
+    title: Hello API Platform
+    version: 1.0.0
+    defaults:
+        #route_prefix: '/v1'
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']
+
+    formats:
+        jsonld: [ 'application/ld+json' ]
+        json: [ 'application/json' ]
+
+    docs_formats:
+         jsonld: ['application/ld+json']
+         json: ['application/json']
+         html: ['text/html']
+
+    enable_swagger: false
+    enable_swagger_ui: false

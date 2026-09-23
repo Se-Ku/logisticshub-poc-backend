@@ -1,0 +1,61 @@
+framework:
+    messenger:
+        # Uncomment this (and the failed transport below) to send failed messages to this transport for later handling.
+        # failure_transport: failed
+
+        transports:
+            # https://symfony.com/doc/current/messenger.html#transport-configuration
+            # async: '%env(MESSENGER_TRANSPORT_DSN)%'
+            # failed: 'doctrine://default?queue_name=failed'
+            sync: 'sync://'
+
+            # Orders ready to be shipped
+            fulfillment_outbound_amqp:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+
+                # Force JSON format and application/json content-type header
+                serializer: messenger.transport.symfony_serializer
+
+                options:
+                    exchange:
+                        name: '%env(RABBITMQ_FULFILLMENT_EXCHANGE_NAME)%'
+                        type: topic
+                        # Routing key attached to messages dispatched via this transport
+                        default_publish_routing_key: 'order.dispatched'
+
+                    queues:
+                        order.fulfillment.queue:
+                            binding_keys: [ 'order.dispatched' ]
+                            arguments:
+                                x-dead-letter-exchange: '%env(RABBITMQ_FULFILLMENT_DLX_EXCHANGE_NAME)%'
+                                x-dead-letter-routing-key: 'order.fulfillment.dlq'
+
+            # Processed Orders (with shipping label)
+            fulfillment_inbound_amqp:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                serializer: App\Serializer\ExternalJsonSerializer
+                options:
+                    auto_setup: false # Prevents Symfony from running queue.declare checks
+                    exchange:
+                        name: '%env(RABBITMQ_FULFILLMENT_EXCHANGE_NAME)%'
+                        type: topic
+                    queues:
+                        order.fulfilled.queue:
+                            binding_keys: [ 'order.fulfilled' ]
+                            arguments:
+                                x-dead-letter-exchange: '%env(RABBITMQ_FULFILLMENT_DLX_EXCHANGE_NAME)%'
+                                x-dead-letter-routing-key: 'order.fulfilled.dlq'
+
+        routing:
+            # Route your messages to the transports
+            # 'App\Message\YourMessage': async
+            'App\Message\OrderDispatchedEvent': fulfillment_outbound_amqp
+            'App\Message\OrderFulfilledEvent': fulfillment_inbound_amqp
+
+# when@test:
+#    framework:
+#        messenger:
+#            transports:
+#                # replace with your transport name here (e.g., my_transport: 'in-memory://')
+#                # For more Messenger testing tools, see https://github.com/zenstruck/messenger-test
+#                async: 'in-memory://'

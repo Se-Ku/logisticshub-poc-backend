@@ -1,0 +1,10 @@
+framework:
+    http_client:
+        scoped_clients:
+            shipping.client:
+                base_uri: '%env(SHIPPING_MICROSERVICE_URL)%'
+                headers:
+                    'X-API-KEY': '%env(SHIPPING_MICROSERVICE_API_KEY)%'
+                    'Accept': 'application/json'
+                timeout: 0.2 # 200ms response timeout
+                max_duration: 0.2 # 200ms max total execution duration limit

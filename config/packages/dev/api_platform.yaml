@@ -1,0 +1,3 @@
+api_platform:
+    enable_swagger: true
+    enable_swagger_ui: true
